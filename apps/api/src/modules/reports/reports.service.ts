@@ -265,12 +265,15 @@ export class ReportsService {
             throw new NotFoundException('Cycle not found');
         }
 
+        const includedClassFilter = {
+            student: { classStudents: { some: { class: { isIncluded: true } } } },
+        };
         const [total, completed, inProgress, notStarted, absent] = await Promise.all([
-            this.prisma.assessment.count({ where: { cycleId } }),
-            this.prisma.assessment.count({ where: { cycleId, status: 'COMPLETED' } }),
-            this.prisma.assessment.count({ where: { cycleId, status: 'IN_PROGRESS' } }),
-            this.prisma.assessment.count({ where: { cycleId, status: 'NOT_STARTED' } }),
-            this.prisma.assessment.count({ where: { cycleId, status: 'ABSENT' } }),
+            this.prisma.assessment.count({ where: { cycleId, ...includedClassFilter } }),
+            this.prisma.assessment.count({ where: { cycleId, status: 'COMPLETED', ...includedClassFilter } }),
+            this.prisma.assessment.count({ where: { cycleId, status: 'IN_PROGRESS', ...includedClassFilter } }),
+            this.prisma.assessment.count({ where: { cycleId, status: 'NOT_STARTED', ...includedClassFilter } }),
+            this.prisma.assessment.count({ where: { cycleId, status: 'ABSENT', ...includedClassFilter } }),
         ]);
 
         return {

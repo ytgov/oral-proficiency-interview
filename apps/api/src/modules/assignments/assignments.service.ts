@@ -467,7 +467,7 @@ export class AssignmentsService {
     const evaluatorWorkload = await Promise.all(
       evaluators.map(async (ev) => {
         const evAssignments = await this.prisma.evaluatorAssignment.findMany({
-          where: { cycleId: targetCycleId, evaluatorId: ev.id },
+          where: { cycleId: targetCycleId, evaluatorId: ev.id, class: { isIncluded: true } },
           select: {
             classId: true,
           },
@@ -481,13 +481,18 @@ export class AssignmentsService {
               },
             })
           : 0;
-        const completedCount = await this.prisma.assessment.count({
-          where: {
-            cycleId: targetCycleId,
-            evaluatorId: ev.id,
-            status: 'COMPLETED',
-          },
-        });
+        const completedCount = evClassIds.length > 0
+          ? await this.prisma.assessment.count({
+              where: {
+                cycleId: targetCycleId,
+                evaluatorId: ev.id,
+                status: 'COMPLETED',
+                student: {
+                  classStudents: { some: { classId: { in: evClassIds } } },
+                },
+              },
+            })
+          : 0;
         const progress = studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0;
 
         return {

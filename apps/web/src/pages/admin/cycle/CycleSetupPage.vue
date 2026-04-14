@@ -5,7 +5,7 @@
     <div class="container mx-auto px-6 py-8">
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-neutral-900 mb-2">Cycle Management</h1>
-        <p class="text-neutral-600">Create cycles, seed data from the data warehouse, approve, and reset.</p>
+        <p class="text-neutral-600">Seed data from the data warehouse, approve, and reset cycles.</p>
       </div>
 
       <!-- No Active Cycle Banner -->
@@ -15,7 +15,7 @@
             <TriangleAlert class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <div>
               <h3 class="font-semibold text-neutral-900 mb-1">System Ready for New Cohort</h3>
-              <p class="text-sm text-neutral-600">The previous cycle has been reset. Create a new cycle or seed data from the data warehouse to begin.</p>
+              <p class="text-sm text-neutral-600">The previous cycle has been reset. Seed data from the data warehouse to create a new cycle.</p>
             </div>
           </div>
         </BaseCard>
@@ -24,7 +24,7 @@
             <TriangleAlert class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div>
               <h3 class="font-semibold text-neutral-900 mb-1">No Active Cycle</h3>
-              <p class="text-sm text-neutral-600">Create a new assessment cycle to begin, or seed data from the data warehouse which will create one automatically.</p>
+              <p class="text-sm text-neutral-600">Seed data from the data warehouse to create a new assessment cycle automatically.</p>
             </div>
           </div>
         </BaseCard>
@@ -37,51 +37,6 @@
 
       <template v-else>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <!-- Create Cycle Card -->
-          <BaseCard>
-            <h2 class="text-xl font-semibold text-neutral-900 mb-4">Create New Cycle</h2>
-            <form class="space-y-4" @submit.prevent="handleCreateCycle">
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-1">Cycle Name</label>
-                <input
-                  v-model="newCycle.name"
-                  type="text"
-                  required
-                  maxlength="100"
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 2025-2026 Assessment Cycle"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-1">Start Date</label>
-                <input
-                  v-model="newCycle.startsOn"
-                  type="date"
-                  required
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-1">End Date</label>
-                <input
-                  v-model="newCycle.endsOn"
-                  type="date"
-                  required
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button
-                type="submit"
-                :disabled="isCreating || !!activeCycle"
-                class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {{ isCreating ? 'Creating...' : 'Create Cycle' }}
-              </button>
-              <p v-if="activeCycle" class="text-sm text-neutral-500">
-                An active cycle already exists. Reset it first to create a new one.
-              </p>
-            </form>
-          </BaseCard>
 
           <!-- Active Cycle Card -->
           <BaseCard v-if="activeCycle">
@@ -553,10 +508,8 @@ const error = ref<string | null>(null);
 const activeCycle = ref<Cycle | null>(null);
 const cycleDataCounts = ref<{ schools: number; programs: number; classes: number; students: number; enrollments: number } | null>(null);
 const hasCycleData = computed(() => cycleDataCounts.value != null && cycleDataCounts.value.students > 0);
-const isCreating = ref(false);
 const isApproving = ref(false);
 const isSavingCycle = ref(false);
-const newCycle = ref({ name: '', startsOn: '', endsOn: '' });
 const editCycle = ref({ name: '', startsOn: '', endsOn: '' });
 
 const cycleHasEdits = computed(() => {
@@ -652,11 +605,6 @@ const formatDateTime = (dateString: string) => {
   });
 };
 
-const getCycleYear = (startsOn: string) => {
-  const parsedYear = Number.parseInt(startsOn.split('-')[0] || '', 10);
-  return Number.isNaN(parsedYear) ? null : parsedYear;
-};
-
 // ─── Fetches ──────────────────────────────────────────────────────────────────
 
 const fetchActiveCycle = async () => {
@@ -720,26 +668,6 @@ async function fetchResetStatus() {
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
-
-const handleCreateCycle = async () => {
-  isCreating.value = true;
-  error.value = null;
-
-  try {
-    const year = getCycleYear(newCycle.value.startsOn);
-    if (!year) {
-      throw new Error('Start date is required to determine the cycle year');
-    }
-
-    await api.post('/admin/cycles', { ...newCycle.value, year });
-    newCycle.value = { name: '', startsOn: '', endsOn: '' };
-    await fetchActiveCycle();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unknown error';
-  } finally {
-    isCreating.value = false;
-  }
-};
 
 const handleUpdateCycle = async () => {
   if (!activeCycle.value) return;

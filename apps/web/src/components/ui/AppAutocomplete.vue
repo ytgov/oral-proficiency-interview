@@ -189,8 +189,8 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
-// Update search query when modelValue changes externally
-watch(() => props.modelValue, (newValue) => {
+// Update search query when modelValue or options change externally
+watch([() => props.modelValue, () => props.options], ([newValue]) => {
   // Only update if dropdown is closed and there's a selection
   if (!isOpen.value && newValue !== null) {
     const option = props.options.find((opt) => opt.value === newValue);

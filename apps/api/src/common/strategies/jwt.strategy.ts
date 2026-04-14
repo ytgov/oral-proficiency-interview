@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub?: string; email?: string; permissions?: string[]; scope?: string }) {
+  async validate(payload: { sub?: string; email?: string; permissions?: string[]; scope?: string; gty?: string }) {
     if (!payload.sub) {
       throw new UnauthorizedException('Invalid token payload');
     }
@@ -53,6 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         isActive: user.isActive,
         roles: user.userRoles.map((ur) => ur.role.name),
         permissions: payload.permissions || payload.scope?.split(' ') || [],
+        gty: payload.gty,
       };
     }
 
@@ -63,6 +64,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       isActive: true, // New users are active by default
       permissions: payload.permissions || payload.scope?.split(' ') || [],
+      gty: payload.gty,
     };
   }
 }

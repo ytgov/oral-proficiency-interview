@@ -45,12 +45,21 @@ export class DashboardService {
 
   private async getSystemOverview(cycleId: number) {
     const totalStudents = await this.prisma.student.count({
-      where: { cycleId, isActive: true },
+      where: {
+        cycleId,
+        isActive: true,
+        classStudents: { some: { class: { isIncluded: true } } },
+      },
     });
 
     const assessments = await this.prisma.assessment.groupBy({
       by: ['status'],
-      where: { cycleId },
+      where: {
+        cycleId,
+        student: {
+          classStudents: { some: { class: { isIncluded: true } } },
+        },
+      },
       _count: { id: true },
     });
 
@@ -89,7 +98,11 @@ export class DashboardService {
       },
       include: {
         students: {
-          where: { cycleId, isActive: true },
+          where: {
+            cycleId,
+            isActive: true,
+            classStudents: { some: { class: { isIncluded: true } } },
+          },
           select: {
             id: true,
             assessments: {
@@ -151,30 +164,37 @@ export class DashboardService {
 
     const workload = await Promise.all(
       evaluators.map(async (evaluator) => {
-        // Get all students assigned to this evaluator through class assignments
+        // Get all students assigned to this evaluator through class assignments (only included classes)
         const assignedClasses = await this.prisma.evaluatorAssignment.findMany({
-          where: { cycleId, evaluatorId: evaluator.id },
+          where: { cycleId, evaluatorId: evaluator.id, class: { isIncluded: true } },
           select: { classId: true },
         });
 
         const classIds = assignedClasses.map((a) => a.classId);
 
         // Count total students in assigned classes
-        const totalStudents = await this.prisma.classStudent.count({
-          where: {
-            classId: { in: classIds },
-            student: { cycleId, isActive: true },
-          },
-        });
+        const totalStudents = classIds.length > 0
+          ? await this.prisma.classStudent.count({
+              where: {
+                classId: { in: classIds },
+                student: { cycleId, isActive: true },
+              },
+            })
+          : 0;
 
-        // Count completed assessments by this evaluator
-        const completedAssessments = await this.prisma.assessment.count({
-          where: {
-            cycleId,
-            evaluatorId: evaluator.id,
-            status: 'COMPLETED',
-          },
-        });
+        // Count completed assessments by this evaluator (only in included classes)
+        const completedAssessments = classIds.length > 0
+          ? await this.prisma.assessment.count({
+              where: {
+                cycleId,
+                evaluatorId: evaluator.id,
+                status: 'COMPLETED',
+                student: {
+                  classStudents: { some: { classId: { in: classIds } } },
+                },
+              },
+            })
+          : 0;
 
         return {
           name: `${evaluator.firstName} ${evaluator.lastName}`.trim(),
@@ -209,10 +229,12 @@ export class DashboardService {
       where: {
         cycleId,
         isActive: true,
+        classStudents: { some: { class: { isIncluded: true } } },
       },
       include: {
         school: { select: { id: true, name: true } },
         classStudents: {
+          where: { class: { isIncluded: true } },
           include: {
             class: {
               include: {
@@ -268,11 +290,15 @@ export class DashboardService {
       const resolvedStatus = assessment?.status ?? 'NOT_STARTED';
       const resolvedEvaluator = assessment?.evaluator ?? assignedEvaluator;
 
+      // Track all class enrollments for filtering
+      const allClassIds = student.classStudents.map((cs) => cs.classId);
+
       return {
         id: assessment?.id ?? null,
         studentId: student.id,
         schoolId: student.schoolId,
         classId: classStudent?.classId ?? null,
+        allClassIds,
         evaluatorId: resolvedEvaluator?.id ?? null,
         programId: cls?.program?.id ?? null,
         studentName: `${student.firstName} ${student.lastName}`.trim(),
@@ -299,7 +325,7 @@ export class DashboardService {
       if (filters?.status && filters.status !== 'ALL' && row.status !== filters.status) return false;
       if (filters?.evaluatorId && row.evaluatorId !== filters.evaluatorId) return false;
       if (filters?.schoolId && row.schoolId !== filters.schoolId) return false;
-      if (filters?.classId && row.classId !== filters.classId) return false;
+      if (filters?.classId && !row.allClassIds.includes(filters.classId)) return false;
       if (filters?.programId && row.programId !== filters.programId) return false;
       if (filters?.reEval === 'YES' && !row.reEval) return false;
       if (filters?.reEval === 'NO' && row.reEval) return false;
@@ -313,33 +339,32 @@ export class DashboardService {
       notStarted: filtered.filter((row) => row.status === 'NOT_STARTED').length,
     };
 
-    // Build filter options
+    // Build filter options from all enrollments (not just the primary class)
     const schoolMap = new Map<number, string>();
     const classMap = new Map<number, string>();
     const evaluatorMap = new Map<number, string>();
     const programMap = new Map<number, string>();
 
+    for (const student of students) {
+      if (student.schoolId && student.school?.name) {
+        schoolMap.set(student.schoolId, student.school.name);
+      }
+      for (const cs of student.classStudents) {
+        classMap.set(cs.classId, cs.class.classCode);
+        if (cs.class.program) {
+          programMap.set(cs.class.program.id, cs.class.program.name);
+        }
+      }
+    }
     for (const row of rows) {
-      if (row.schoolId && row.school) {
-        schoolMap.set(row.schoolId, row.school);
-      }
       if (row.evaluatorId && row.evaluator) {
-        evaluatorMap.set(
-          row.evaluatorId,
-          row.evaluator,
-        );
-      }
-      if (row.classId && row.classCode) {
-        classMap.set(row.classId, row.classCode);
-      }
-      if (row.programId && row.program) {
-        programMap.set(row.programId, row.program);
+        evaluatorMap.set(row.evaluatorId, row.evaluator);
       }
     }
 
     return {
       stats,
-      assessments: filtered,
+      assessments: filtered.map(({ allClassIds: _, ...row }) => row),
       filterOptions: {
         schools: [...schoolMap.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)),
         classes: [...classMap.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)),

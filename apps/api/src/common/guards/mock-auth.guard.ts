@@ -21,6 +21,28 @@ export class MockAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
+
+    // In mock mode, detect M2M tokens from the Authorization header
+    const authHeader = request.headers['authorization'];
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.slice(7);
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+        if (payload.gty === 'client-credentials') {
+          request.user = {
+            externalAuthId: payload.sub,
+            email: null,
+            isActive: true,
+            gty: payload.gty,
+            mockAuth: true,
+          };
+          return true;
+        }
+      } catch {
+        // Not a valid JWT — fall through to normal mock auth
+      }
+    }
+
     const mockUserId = request.headers['x-mock-user-id'];
     const mockRoleHeader = request.headers['x-mock-role'];
     const mockRole =

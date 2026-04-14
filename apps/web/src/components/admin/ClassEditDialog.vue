@@ -155,6 +155,15 @@ const hasChanges = computed(() => {
 watch(() => props.visible, async (isVisible) => {
   if (isVisible) {
     await fetchTeachers();
+    // Initialize form after teachers are loaded so the autocomplete can resolve the label
+    if (props.classItem) {
+      form.value = {
+        teacherId: props.classItem.teacher?.id ?? null,
+        grade: props.classItem.grade ?? null,
+        programId: props.classItem.program?.id ?? 0,
+      };
+      error.value = null;
+    }
   }
 });
 
