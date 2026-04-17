@@ -27,14 +27,14 @@
           placeholder="Search schools..."
           @update:model-value="applyFilters"
         />
-
+<!-- 
         <AppAutocomplete
           v-model="filters.classId"
           :options="classOptions"
           label="Class"
           placeholder="Search classes..."
           @update:model-value="applyFilters"
-        />
+        /> -->
 
         <AppAutocomplete
           v-model="filters.evaluatorId"
@@ -60,13 +60,13 @@
           @update:model-value="applyFilters"
         />
 
-        <AppAutocomplete
+        <!-- <AppAutocomplete
           v-model="filters.programId"
           :options="programOptions"
           label="Program"
           placeholder="Search programs..."
           @update:model-value="applyFilters"
-        />
+        /> -->
       </div>
 
       <p class="mt-3 text-xs text-neutral-500">
@@ -257,10 +257,10 @@ const schoolOptions = computed(() => [
   ...filterOptions.value.schools.map((s) => ({ value: s.id, label: s.name })),
 ]);
 
-const classOptions = computed(() => [
-  { value: null, label: 'All Classes' },
-  ...filterOptions.value.classes.map((c) => ({ value: c.id, label: c.name })),
-]);
+// const classOptions = computed(() => [
+//   { value: null, label: 'All Classes' },
+//   ...filterOptions.value.classes.map((c) => ({ value: c.id, label: c.name })),
+// ]);
 
 const evaluatorOptions = computed(() => [
   { value: null, label: 'All Evaluators' },
@@ -281,17 +281,17 @@ const statusOptions = [
   { value: 'ABSENT', label: 'Absent' },
 ];
 
-const programOptions = computed(() => [
-  { value: null, label: 'All Programs' },
-  ...filterOptions.value.programs.map((p) => ({ value: p.id, label: p.name })),
-]);
+// const programOptions = computed(() => [
+//   { value: null, label: 'All Programs' },
+//   ...filterOptions.value.programs.map((p) => ({ value: p.id, label: p.name })),
+// ]);
 
 const columns: DataTableColumn<AssessmentRow>[] = [
   { key: 'studentName', header: 'Student Name', sortable: true, searchable: true, value: (r) => r.studentName },
   { key: 'school', header: 'School', sortable: true, searchable: true, value: (r) => r.school ?? '' },
-  { key: 'classCode', header: 'Class', sortable: true, searchable: true, value: (r) => r.classCode ?? '' },
-  { key: 'teacher', header: 'Teacher', sortable: true, searchable: true, value: (r) => r.teacher ?? '' },
-  { key: 'program', header: 'Program', sortable: true, searchable: true, value: (r) => r.program ?? '' },
+  // { key: 'classCode', header: 'Class', sortable: true, searchable: true, value: (r) => r.classCode ?? '' },
+  // { key: 'teacher', header: 'Teacher', sortable: true, searchable: true, value: (r) => r.teacher ?? '' },
+  // { key: 'program', header: 'Program', sortable: true, searchable: true, value: (r) => r.program ?? '' },
   { key: 'status', header: 'Status', sortable: true, searchable: true, value: (r) => r.status },
   { key: 'score', header: 'Score', sortable: true, searchable: false, value: (r) => r.score ?? '' },
   { key: 'reEval', header: 'Re-eval', sortable: true, searchable: false, value: (r) => r.reEval ? 'Yes' : 'No' },
