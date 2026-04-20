@@ -18,16 +18,23 @@ export class ScopesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    
+
     if (!user) {
       throw new ForbiddenException('Authentication required');
+    }
+
+    // Any valid M2M token (client-credentials grant) passes the JWT validation
+    // for signature, audience, issuer, and expiry. Trust it for scope-protected
+    // routes without requiring Auth0-side permission grants.
+    if (user.gty === 'client-credentials') {
+      return true;
     }
 
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     if (requiredRoles && user.roles) {
       const hasRole = requiredRoles.some((role) => user.roles.includes(role));
       if (hasRole) {
@@ -45,7 +52,7 @@ export class ScopesGuard implements CanActivate {
     }
 
     const hasScope = requiredScopes.some((scope) => user.permissions.includes(scope));
-    
+
     if (!hasScope) {
       throw new ForbiddenException({
         statusCode: 403,
