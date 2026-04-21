@@ -120,6 +120,7 @@ export class ReportsController {
      * Coordinator progress report with full student details (JSON).
      */
     @Get('progress')
+    @Scopes('reports:read')
     @Roles('COORDINATOR', 'ADMIN')
     @ApiOperation({ summary: 'Detailed progress report with full student information (coordinator view)' })
     @ApiQuery({ name: 'cycleId', required: false, type: 'integer', description: 'Defaults to the active cycle if omitted', example: 3 })
@@ -191,6 +192,7 @@ export class ReportsController {
      * Coordinator progress report as CSV download.
      */
     @Get('progress/csv')
+    @Scopes('reports:read')
     @Roles('COORDINATOR', 'ADMIN')
     @Header('Content-Type', 'text/csv')
     @ApiOperation({ summary: 'Progress report as a CSV download' })
@@ -227,6 +229,7 @@ export class ReportsController {
      * Export summary with stats — used by admin export page.
      */
     @Get('summary')
+    @Scopes('reports:read')
     @Roles('COORDINATOR', 'ADMIN')
     @ApiOperation({ summary: 'Export summary with aggregated statistics for a cycle' })
     @ApiQuery({ name: 'cycleId', required: false, type: 'integer', description: 'Defaults to the active cycle if omitted', example: 3 })

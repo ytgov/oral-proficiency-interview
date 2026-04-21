@@ -8,6 +8,7 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiOkResponse, ApiParam } from '@nestjs/swagger';
 import { AuditService, AuditAction } from './audit.service';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Scopes } from '../../common/decorators/scopes.decorator';
 
 @ApiTags('Audit')
 @ApiBearerAuth('access-token')
@@ -21,6 +22,7 @@ export class AuditController {
      * Accessible by EVALUATOR (own assessments), COORDINATOR, ADMIN.
      */
     @Get('assessments/:id')
+    @Scopes('audit:read')
     @Roles('EVALUATOR', 'COORDINATOR', 'ADMIN')
     @ApiOperation({ summary: 'Get the full change history timeline for a specific assessment' })
     @ApiParam({ name: 'id', type: 'integer', description: 'Assessment ID', example: 42 })
@@ -64,6 +66,7 @@ export class AuditController {
      * Supports filters: assessmentId, action, changedBy, dateFrom, dateTo, page, limit.
      */
     @Get('logs')
+    @Scopes('audit:read')
     @Roles('ADMIN')
     @ApiOperation({ summary: 'Query paginated audit logs with filters (by assessment, action type, user, date range)' })
     @ApiQuery({ name: 'assessmentId', required: false, type: 'integer', description: 'Filter by assessment ID', example: 42 })
@@ -164,6 +167,7 @@ export class AuditController {
      * Get distinct action types for filter dropdowns.
      */
     @Get('actions')
+    @Scopes('audit:read')
     @Roles('ADMIN', 'COORDINATOR')
     @ApiOperation({ summary: 'Get the list of distinct audit action types (for filter dropdowns)' })
     @ApiOkResponse({
@@ -183,6 +187,7 @@ export class AuditController {
      * Full system audit history: purges, manual edits, and ingestion logs.
      */
     @Get('system')
+    @Scopes('audit:read')
     @Roles('ADMIN')
     @ApiOperation({ summary: 'Get the full system audit history (purges, manual edits, ingestion) sorted by date' })
     @ApiOkResponse({
