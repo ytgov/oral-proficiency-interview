@@ -6,11 +6,11 @@
 version: 2
 updates:
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/src/web" # Location of package manifests
+    directory: "/apps/web" # Location of package manifests
     schedule:
       interval: "daily"
 
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/src/api" # Location of package manifests
+    directory: "/apps/api" # Location of package manifests
     schedule:
       interval: "daily"
