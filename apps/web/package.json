@@ -15,7 +15,7 @@
     "@auth0/auth0-vue": "^2.3.3",
     "@tanstack/vue-query": "^5.17.19",
     "chart.js": "^4.5.1",
-    "lucide-vue-next": "^0.564.0",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5",
