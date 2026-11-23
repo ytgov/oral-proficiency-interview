@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",
-    "@nestjs/platform-express": "^11.1.13",
+    "@nestjs/platform-express": "^12.6.0",
     "@nestjs/schematics": "^10.1.0",
     "@nestjs/testing": "^10.3.0",
     "@types/fluent-ffmpeg": "^2.1.27",
