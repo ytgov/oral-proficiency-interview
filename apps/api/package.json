@@ -20,7 +20,7 @@
     "db:generate": "prisma generate --config ./prisma/prisma.config.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.916.0",
+    "@aws-sdk/client-s3": "^3.1174.0",
     "@aws-sdk/s3-request-presigner": "^3.916.0",
     "@fastify/multipart": "^8.3.1",
     "@fastify/static": "^6.12.0",
